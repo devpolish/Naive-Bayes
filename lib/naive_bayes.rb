@@ -10,7 +10,6 @@
 
 # However, when classifying, P(Item) is the same across all calcualtions
 # So we don't bother to calculate it
-
 class NaiveBayes
   
   class << self
@@ -58,6 +57,7 @@ class NaiveBayes
     @klasses.each do |klass|
       scores[klass] = (prob_of_item_given_a_class(features, klass) * prob_of_class(klass))
     end
+    return [] if scores.values.reduce(:+) == 0.0
     scores.sort {|a,b| b[1] <=> a[1]}[0]
   end
   
@@ -74,14 +74,14 @@ class NaiveBayes
   def prob_of_item_given_a_class(features, klass)
     a = features.inject(1.0) do |sum, feature|
       prob = prob_of_feature_given_a_class(feature, klass)
-      sum *= prob
     end
   end
   
   # P(Feature | Class)
   def prob_of_feature_given_a_class(feature, klass)
-    return assumed_probability if @features_count[klass][feature] == 0
-    @features_count[klass][feature] / @klass_count[klass]
+    # If there is not any sentence in our trained models we return nil value
+    @feature = @features_count[klass][feature.to_sym]
+    feature.nil? ? feature : @features_count[klass][feature.to_sym] / @klass_count[klass]
   end
   
   # P(Class)
@@ -93,13 +93,6 @@ class NaiveBayes
     @klass_count.inject(0) do |sum, klass|
       sum += klass[1]
     end
-  end
-  
-  # If we have only trained a little bit a class may not have had a feature yet
-  # give it a probability of 0 may not be true so we produce a assumed probability
-  # which gets smaller more we train
-  def assumed_probability
-    0.5 / (total_items/2)
   end
   
 end
